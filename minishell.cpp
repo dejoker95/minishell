@@ -16,8 +16,7 @@
 char PWD[1024];
 
 char* myfunc[] = {"cd", "exit"};
-char* unix[] = {"ls", "mkdir", "echo", "cat", "head", "tail", "time", \
-"rm", "pwd", "cp", "touch", "ps", "more", "top", "kill", "ln", "sleep"};
+char* unix[] = {"ls", "mkdir", "echo", "cat", "head", "tail", "time", "rm", "pwd", "cp", "touch", "ps", "more", "top", "kill", "ln", "sleep"};
 
 int my_cd(char** args){
 
@@ -43,6 +42,9 @@ int (* my_function[]) (char**) = {
 };
 
 void run_unix(char** arg, int background){
+    int std_out;
+	std_out = dup(1);
+
     int status, pid, out;
     pid = fork();
 
@@ -59,9 +61,11 @@ void run_unix(char** arg, int background){
         }
     }      
     else{
-        out = open("/dev/null", O_RDONLY);
-        dup2(out, 1);
-        close(out);
+        if(background == 1){
+            out = open("/dev/null", O_WRONLY);
+            dup2(out, 1);
+            close(out);
+        }
         execvp(arg[0], arg);
     }
 }
@@ -208,6 +212,7 @@ int execute_command(char** args){
     // unix programs
     for(int i = 0; i < 16; i++){
         if ( strcmp(arg[0], unix[i]) == 0 ){
+            printf("hi\n");
             run_unix(arg, background);
             return 1;
         }
