@@ -103,6 +103,7 @@ int main(int argc, char* argv[]){
         pthread_join(threads[i], NULL);
     }
 
+    // clock_t endTime = clock();
     // 부분 소팅된 배열을 부모 프로세스에서 마무리 병합정렬
     merge_sort_last(arr, 0, n-1, part_length);
     // 시간 측정 끝

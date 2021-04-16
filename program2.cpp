@@ -125,7 +125,7 @@ int main(int argc, char* argv[]){
         string out = "output" + to_string(i);
         ifstream readInput;
         ifstream readOutput;
-        
+
         readOutput.open(out);
 
         if (i == pNum - 1 && pNum != 1){
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]){
         remove(in.c_str());
         remove(out.c_str());
     }
-
+    // clock_t endTime = clock();
     // 부분 소팅된 배열을 부모 프로세스에서 마무리 병합정렬
     arr2 = new int[n];
     merge_sort(arr, 0, n-1, part_length);
