@@ -6,7 +6,7 @@ minishell: minishell.cpp
 program1: program1.cpp
 	g++ -o program1 program1.cpp
 
-program1: program2.cpp
+program2: program2.cpp
 	g++ -o program2 program2.cpp
 
 program3: program3.cpp
