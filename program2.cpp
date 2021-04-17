@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <ctime>
+#include <chrono>
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -14,8 +14,10 @@
 
 using namespace std;
 
+// sorting 중간 결과를 저장하기 위한 temporary 배열
 int *arr2;
 
+// 쪼개진 두 배열의 값을 비교해서 하나의 배열로 정렬하는 함수
 void merge(int* arr, int left, int mid, int right){
     int i = left;
     int j = mid + 1;
@@ -45,7 +47,7 @@ void merge(int* arr, int left, int mid, int right){
     }
 }
 
-// 기본 merge_sort 이지만 자식 프로세스가 반환한 길이보다  배열을 작게 쪼개지 않음
+// 기본 merge_sort 이지만 자식 프로세스가 반환한 길이보다 배열을 작게 쪼개지 않음
 void merge_sort(int* arr, int left, int right, int part_length){
     if (left < right && (right - left + 1) > part_length){
         int mid = (left + right) / 2;
@@ -55,6 +57,7 @@ void merge_sort(int* arr, int left, int right, int part_length){
     }
 }
 
+//프로세스 별로 merge sort를 실행할 파트를 나눠서 임시 파일에 저장하는 함수
 void make_input(int filenum, int* arr, int start, int end){
     int num = end -start + 1;
     string fileName = "input" + to_string(filenum);
@@ -67,6 +70,8 @@ void make_input(int filenum, int* arr, int start, int end){
     out.close();
 }
 
+
+
 int main(int argc, char* argv[]){
     int pNum = atoi(argv[1]);   // 프로세스 개수
 
@@ -78,10 +83,13 @@ int main(int argc, char* argv[]){
     for (int i = 0; i < n; i++){
         scanf("%d", &arr[i]);
     }
-
+    // 시간 측정 시작
+    auto start = chrono::high_resolution_clock::now();
+    // 프로세스마다 할당될 숫자의 개수
     int part_length;
     part_length = n / pNum;
     
+    // 각 프로세스를 위한 input 파일 만들기
     for (int i = 1; i <= pNum; i++){
         if (i == pNum){
             make_input(i-1, arr, part_length * (i - 1), n - 1);
@@ -90,8 +98,6 @@ int main(int argc, char* argv[]){
             make_input(i-1, arr, part_length * (i - 1), part_length * i - 1);
         }
     }
-
-    clock_t startTime = clock();
 
     // 자식 프로세스 만들어서 실행
     pid_t* children = new pid_t[pNum];
@@ -113,7 +119,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    // 부모 프로세스는 자식 프로세스들의 작업이 끝날 때까지 wait
+    // 자식 프로세스들의 작업이 끝날 때까지 대기한다
     for(int i = 0; i < pNum; i++){
         waitpid(children[i], NULL, 0);
     }
@@ -143,17 +149,20 @@ int main(int argc, char* argv[]){
         remove(in.c_str());
         remove(out.c_str());
     }
-    // clock_t endTime = clock();
+    
+
     // 부분 소팅된 배열을 부모 프로세스에서 마무리 병합정렬
     arr2 = new int[n];
     merge_sort(arr, 0, n-1, part_length);
 
-    clock_t endTime = clock();
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
+    long time = duration.count();
 
     // 최종 결과 출력
     for (int i = 0; i < n; i++){
         printf("%d ", arr[i]);
     }
     printf("\n");
-    printf("%ld\n", (endTime - startTime));
+    printf("%ld\n", time);
 }

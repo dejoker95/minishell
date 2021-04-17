@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <ctime>
+#include <chrono>
+#include <iostream>
 
+using namespace std;
+
+// sorting 중간 결과를 저장하기 위한 temporary 배열
 int *arr2;
 
+// 쪼개진 두 배열의 값을 비교해서 하나의 배열로 정렬하는 함수
 void merge(int* arr, int left, int mid, int right){
     int i = left;
     int j = mid + 1;
@@ -34,6 +39,7 @@ void merge(int* arr, int left, int mid, int right){
     }
 }
 
+// 재귀적으로 병합정렬을 실행하는 함수
 void merge_sort(int* arr, int left, int right){
     if (left < right){
         int mid = (left + right) / 2;
@@ -43,9 +49,11 @@ void merge_sort(int* arr, int left, int right){
     }
 }
 
+
 int main(){
-    int n;
-    int* arr;
+    // input 받아오기
+    int n;          // input의 길이
+    int* arr;       // input을 저장할 배열
     scanf("%d", &n);
 
     arr = new int[n];
@@ -55,14 +63,17 @@ int main(){
         scanf("%d", &arr[i]);
     }
 
-    clock_t startTime = clock();
+    // 시간 측정 시작 / sorting 실행
+    auto start = chrono::high_resolution_clock::now();
     merge_sort(arr, 0, n-1);
-    clock_t endTime = clock();
-
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
+    long time = duration.count();
+    // 결과 출력
     for (int i = 0; i < n; i++){
         printf("%d ", arr[i]);
     }
     printf("\n");
 
-    printf("%ld\n", (endTime - startTime));
+    printf("%ld\n", time);
 }

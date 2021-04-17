@@ -1,20 +1,24 @@
-#include <stdio.h>	// For: printf(), fprintf(), getchar(), perror(), stderr
-#include <stdlib.h>     // For: malloc(), realloc(), free(), exit(), execvp(), EXIT_SUCCESS, EXIT_FAILURE
-#include <string.h>     // For: strtok(), strcmp(), strcat(), strcpy()
-#include <unistd.h>     // For: chdir(), fork(), exec(), pid_t, getcwd()
-#include <sys/wait.h>	// For: waitpid()
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <time.h>
-/*
- * Environment variables
- */
-char PWD[1024];		// Present Working Directory
-char PATH[1024];
+
+
+
+char PWD[1024];		// 현재 디렉토리 저장
+char PATH[1024];    // 첫 디렉토리 저장
+
+// 새로 정의한 기능 리스트
 char *builtin_str[] = {
   "cd",
   "exit"
 };
 
+
+// cd 기능
 int my_cd(char** args){
     if (args[1] == NULL){
         char home[1024];
@@ -28,16 +32,18 @@ int my_cd(char** args){
     return 1;
 }
 
+// exit 기능
 int my_exit(char** args){
     return 0;
 }
 
+// 새로 정의한 cd, exit 함수 호출용
 int (*builtin_func[]) (char**) = {
     &my_cd,
     &my_exit
 };
 
-
+// 시간, 유저명, 현재 디렉토리를 출력
 void print_default(void){
     //get username
     char username[1024];
@@ -56,6 +62,7 @@ void print_default(void){
     printf("[%s]%s@%s$", buf, username, PWD);
 }
 
+// command line을 읽어와서 char* 배열로 반환
 char *read_command_line(void){
     int position = 0;
     int buf_size = 1024;
@@ -89,6 +96,8 @@ char *read_command_line(void){
     }
 }
 
+// read_command_line 함수의 리턴값을 공백이나 줄바꿈 문자가 있을 때 split
+// token을 반환
 #define DELIM " \t\r\n\a"
 char **split_line(char *buffer){
     int buf_size = 64;
@@ -121,6 +130,7 @@ char **split_line(char *buffer){
     return tokens;
 }
 
+// 명령어를 수행하는 함수, 백그라운드 실행용 플래그를 받아옴
 int run_program(char **args, int is_bg){
     pid_t pid;
     int status;
@@ -148,6 +158,7 @@ int run_program(char **args, int is_bg){
     return 1;
 }
 
+// input, output redirection이 필요한 경우에 명령어를 실행하는 함수
 int redirect_program(char **args, int is_bg, int flag, char* input_val, char* output_val){
     int input_fd, output_fd;
     int status;
@@ -204,16 +215,19 @@ int redirect_program(char **args, int is_bg, int flag, char* input_val, char* ou
     return 1;
 }
 
+// token화 된 명령어를 받아서 백그라운드, 리다이렉션 여부를 판단해서 프로그램 실행
 int shell_execute(char **args){
     if (args[0] == NULL){
         return 1;
     }
-
+    // flag는 리다이렉션 확인용 변수, is_bg는 백그라운드 확인용 변수
     int flag = 0;
     int is_bg = 0;
+    // 리다이렉션이 필요한 경우 새로운 경로를 저장하기 위한 변수들
     char* input_val;
     char* output_val;
 
+    // token을 하나씩 비교하면서 플래그 변수들 조정
     int i = 0;
     while(args[i] != NULL){
         if (strcmp(args[i], "<") == 0 && args[i+1] != NULL){
@@ -249,25 +263,15 @@ int shell_execute(char **args){
             i++;
         }
     }
-    // TEST!!!!
-    // printf("flag: %d\n", flag);
-    // printf("is_bg: %d\n", is_bg);
-    // printf("input: %s\n", input_val);
-    // printf("output: %s\n", output_val);
 
-    // int a = 0;
-    // while (args[a] != NULL){
-    //     printf("%s\n", args[a]);
-    //     a++;
-    // }
-    // TEST!!!!!!
-
+    // cd, exit 일 경우 실행
     for (i = 0; i < 2; i++){
         if (strcmp(args[0], builtin_str[i]) == 0){
             return (*builtin_func[i])(args);
         }
     }
 
+    // 플래그 변수값에 따라 프로그램 실행 또는 리다이렉션 후 프로그램 실행
     if (flag == 0){
         return run_program(args, is_bg);
     }
@@ -278,6 +282,7 @@ int shell_execute(char **args){
     return 1;
 }
 
+// 쉘이 계속해서 작동하게 하는 무한 while loop
 void shell_loop(void){
     char * command_line;
     char ** arguments;
@@ -296,11 +301,9 @@ void shell_loop(void){
 
 
 int main(int argc, char ** argv){
-        // Shell initialization
-	getcwd(PWD, sizeof(PWD));	// Initialize PWD Environment Variable
-	strcpy(PATH, PWD);		// Initialize the command PATH
 
-    // Main loop of the shell
+	getcwd(PWD, sizeof(PWD));
+	strcpy(PATH, PWD);
     shell_loop();
 
     return 0;
